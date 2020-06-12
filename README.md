@@ -6,7 +6,7 @@ Under the Simulation tab is a microsimulation similar to those we ran for our re
 
 The remaining 3 tabs (new cases, dynamics, and network ties) are animated versions of the figures we presented in our article.
 
-The app is best viewed on a laptop or desktop at 1920 x 1080 resolution.
+The app is best viewed on a laptop or desktop at 1920 x 1080 resolution. You can find the app [here.]( https://gdewey.shinyapps.io/covid_sn/)
 
 ## Version History
 
