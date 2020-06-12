@@ -17,7 +17,6 @@ library(reldist)
 library(igraph) 
 library(extrafont)
 library(tidyverse)
-loadfonts(device = "win")
 
 # Load data
 table1 = read_csv("vistablec1.csv")
@@ -31,8 +30,6 @@ label_vector = c("Default scenario (-0/8)",
                  "Balancing groups (B)","Dividing groups (D)","D + B")
 label_vector2 = label_vector[-1]
 color_vector = c("red","blue","purple","gold2","skyblue2","darkolivegreen2")
-
-
 choice_vec = c("No Intervention", 
                "Intermediate Lockdown", 
                "Perfect Lockdown", 
@@ -78,7 +75,7 @@ ui = navbarPage(
                                         label = "Period",
                                         value = 0,
                                         min = 0, 
-                                        max = 50,
+                                        max = 20,
                                         step = 1,
                                         animate = animationOptions(interval = 1500, loop = FALSE)
                             ),
@@ -173,7 +170,19 @@ ui = navbarPage(
              mainPanel(
                  plotOutput("density")
         )
-    )
+    ),
+    
+    tabPanel(title = "About",
+             includeMarkdown("authors.md"),
+             hr(),
+             br(),
+             br(),
+                h5("Built with ",
+                img(src = "https://www.rstudio.com/wp-content/uploads/2014/04/shiny.png", height = "30px"),
+                "by ",
+                img(src = "https://www.rstudio.com/wp-content/uploads/2014/07/RStudio-Logo-Blue-Gray.png", height = "30px"),
+                ".")
+             )
 )
 
 # Define server logic required to draw a histogram
@@ -541,7 +550,7 @@ server <- function(input, output) {
                        legend = c("Susceptible", "Infected", "Exposed", "Recovered"), 
                        fill = color_vector, 
                        border = NA,
-                       cex = 2)
+                       cex = 1.5)
                 
                 sus = ndata_for_plot %>% count(state) %>% filter(state == 0) %>% select(n)
                 exp = ndata_for_plot %>% count(state) %>% filter(state == 1) %>% select(n)
