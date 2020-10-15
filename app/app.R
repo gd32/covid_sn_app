@@ -595,7 +595,8 @@ server <- function(input, output) {
         
         #3.2. Loading packages
         library(Matrix) #for sparse matrix calculation
-        sample1 = function(x) { sample(c(0,1),size=1,replace=FALSE,prob=c(1-x,x)) }
+        sample1 = function(x) 
+            {sample(c(0,1),size=1,replace=FALSE,prob=c(1-x,x))}
         
         #3.3. Parameters
         #Set A (Real ones)
@@ -613,7 +614,6 @@ server <- function(input, output) {
         #3.4. Parameters for each setting
         # s=6 #Fixed
         #h=1 #Vary
-        
         #3.5. Preparing for the result (output) table
         result = NULL
         
@@ -675,7 +675,7 @@ server <- function(input, output) {
                     ndata1$new_i = 0
                     ndata1$new_r = 0
                     #print(m)
-                
+                }
                     
                 ndata_for_plot = ndata1 %>% filter(round == period)
                 
@@ -738,9 +738,9 @@ server <- function(input, output) {
                            fill = NA,
                            border = NA,
                            cex = 2)
-                }
-            }
-            # if (historical == 1) {
+                }            
+                
+                # if (historical == 1) {
                 xdata0_family = xdata0
                 xdata0_family[as.numeric(xdata0_family)<1] = 0 #Make all the non-family ties disappear 
                 
@@ -812,7 +812,7 @@ server <- function(input, output) {
                 # new_exp_vec[((1+period)*s-period):((1+period)*s)] = new_exp
                 # prev_vec[((1+period)*s-period):((1+period)*s)] = prevs
                 # cis_vec[((1+period)*s-period):((1+period)*s)] = cis
-    }, width = 1100, height = 900)
+            }, width = 1100, height = 900)
 }
 
 
