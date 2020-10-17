@@ -14,6 +14,7 @@ library(shinythemes)
 library(Matrix) 
 library(reldist) 
 library(igraph) 
+library(xtable)
 library(extrafont)
 library(tidyverse)
 
@@ -77,8 +78,7 @@ ui = navbarPage(
              includeMarkdown("intro.md"),
              hr()),
     
-    navbarMenu(title = "Simulation",
-               tabPanel(title = "Microsimulation",
+    tabPanel(title = "Microsimulation",
                         
                         sidebarPanel(
                             numericInput(inputId = "pop_size", 
@@ -97,8 +97,8 @@ ui = navbarPage(
                                         label = "Duration",
                                         value = 0,
                                         min = 0, 
-                                        max = 300,
-                                        step = 30,
+                                        max = 60,
+                                        step = 5,
                                         animate = animationOptions(interval = 1500, loop = FALSE)
                             ),
                             selectInput(inputId = "setting",
@@ -109,12 +109,12 @@ ui = navbarPage(
                             actionButton("apply", label = "Apply Settings"),
                             includeMarkdown("microsim.md")                      
                             ),
-
+                        
                         mainPanel(
-                            plotOutput("sn")
+                            plotOutput("sn"),
+                            tableOutput("summary")
                         )
-                )
-    ),
+                ),
     
     # tabPanel(title = "New Cases", 
     #          
@@ -278,7 +278,7 @@ server <- function(input, output) {
     ## For simulation
     
     output$sn = renderPlot({
-        # rm(list=ls())    
+        rm(list=ls())
         
         # Apply button logic
         
@@ -290,8 +290,13 @@ server <- function(input, output) {
         
         #Set B (Concise ones for demo)
         
+        #Things to comment out for simulation
+        people_n = 80
+        infection_rate = 0.05
+        s = 1
+        period = 60
+        
         h = 20345896
-        # people_n = 80
         c_number = c(people_n/4,2,2,2,10,10,10,10)
         c_number2 = c_number*c(1, rep(2, times = 7))
         names_vec = paste0("A", 1:length(c_number)) #Create 8 sectors (A1 - A8)
@@ -389,7 +394,6 @@ server <- function(input, output) {
         #2.4. Choose intervention setting 
         
         # Select setting for testing
-        s = 1
         
         ndata1 = ndata
         # Setting 1 (no intervention = no change)
@@ -607,15 +611,13 @@ server <- function(input, output) {
         e_period = 3 #constant
         i_period = 3 #mean (inverse of the parameter of geometric distribution) #%# modified in R7
         r_period = 300 #we do not do SEIRS model (everybody will get immunity until the end)
-        period = roundmax()
-        # period = 150
+        # period = roundmax()
         historical = 0 #%# modified in R8 (1 for R8)
         
         #3.4. Parameters for each setting
         # s=6 #Fixed
         #h=1 #Vary
         #3.5. Preparing for the result (output) table
-        result = NULL
         
         #4. Infection for 300 days/rounds  
         #4.1. Importing the relevant files (ndata1 and xdata0)
@@ -712,6 +714,15 @@ server <- function(input, output) {
                        border = NA,
                        cex = 1.5)
                 
+                legend("topright",
+                       bty = "n",
+                       legend = c(paste("Mean Degree: ", result$mean),
+                                  paste("SD: ", result$sd),
+                                  paste("NetworkN: ", result$networkN), 
+                                  paste("Reff: ", result$Reff)),
+                       border = NA,
+                       cex = 1.5)
+                
                 sus = ndata_for_plot %>% count(state) %>% filter(state == 0) %>% select(n)
                 exp = ndata_for_plot %>% count(state) %>% filter(state == 1) %>% select(n)
                 inf = ndata_for_plot %>% count(state) %>% filter(state == 2) %>% select(n)
@@ -726,7 +737,7 @@ server <- function(input, output) {
                                       paste("Recovered: ", ifelse(is.na(rec), 0, rec/2))),
                            fill = NA,
                            border = NA,
-                           cex = 2)
+                           cex = 1.75)
                 }
                 else{
                     legend("bottomright",
@@ -737,20 +748,22 @@ server <- function(input, output) {
                                       paste("Recovered: ", ifelse(is.na(rec), 0, rec))),
                            fill = NA,
                            border = NA,
-                           cex = 2)
-                }            
+                           cex = 1.75)
+                }  
                 
-                # if (historical == 1) {
-                xdata0_family = xdata0
-                xdata0_family[as.numeric(xdata0_family)<1] = 0 #Make all the non-family ties disappear 
+                result
                 
-                ndata1$family_contacts = NA  #described later
-                ndata1$inf_length = rgeom(people_n,prob=(1/i_period)) + 1 #mean=3 (Infectious period is determined by geometric distribution (for R, requires + 1))
-                #NOTE: If infected, they stay in I(4) or I(5)+I(6) for "inf_length" days (after 3 days of E). 
-                ndata1$symptomatic = sample(c(0,1),people_n,replace=T,prob=c(0.45,0.55))
-                #NOTE: If infected, each individual has 45% probability for I(4) and 55% probability for I(5)+I(6).
-                ndata1$when_symptomatic = rbinom(people_n,size=ndata1$inf_length,prob=0.5) #mean=1.5 (aka duration of presymptomatic period)
-                #NOTE: If selected for symptomatic, when does I(6) start? 
+                # # if (historical == 1) {
+                # xdata0_family = xdata0
+                # xdata0_family[as.numeric(xdata0_family)<1] = 0 #Make all the non-family ties disappear 
+                # 
+                # ndata1$family_contacts = NA  #described later
+                # ndata1$inf_length = rgeom(people_n,prob=(1/i_period)) + 1 #mean=3 (Infectious period is determined by geometric distribution (for R, requires + 1))
+                # #NOTE: If infected, they stay in I(4) or I(5)+I(6) for "inf_length" days (after 3 days of E). 
+                # ndata1$symptomatic = sample(c(0,1),people_n,replace=T,prob=c(0.45,0.55))
+                # #NOTE: If infected, each individual has 45% probability for I(4) and 55% probability for I(5)+I(6).
+                # ndata1$when_symptomatic = rbinom(people_n,size=ndata1$inf_length,prob=0.5) #mean=1.5 (aka duration of presymptomatic period)
+                # #NOTE: If selected for symptomatic, when does I(6) start? 
                 
                 #NOTE: I(2) will go, and I-asymptomatic(4), I-presymptomatic(5), and I-postsymptomatic(6) will be used.
                 #NOTE: I-asymptomatic(4) lasts for all the I periods once determined.
@@ -812,7 +825,12 @@ server <- function(input, output) {
                 # new_exp_vec[((1+period)*s-period):((1+period)*s)] = new_exp
                 # prev_vec[((1+period)*s-period):((1+period)*s)] = prevs
                 # cis_vec[((1+period)*s-period):((1+period)*s)] = cis
+            
+            
             }, width = 1100, height = 900)
+    
+    # output$summary = renderTable({result %>% select(mean:sd9)})        
+    
 }
 
 
