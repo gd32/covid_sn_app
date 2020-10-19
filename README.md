@@ -1,14 +1,16 @@
 # Visualizing Network Interventions for Controlling the Spread of COVID-19
 
-This app is a companion to our research article **Network Interventions for Managing the COVID-19 Pandemic and Sustaining Economy**, currently under review. The goal of this app is to provide readers of the article and other interested individuals with an animated visualization of the way an infection spreads through a simulated social network and how our proposed interventions can limit that spread.
+This app is a companion to our research article **Network Interventions for Managing the COVID-19 Pandemic and Sustaining Economy**, in print in the Proceedings of the National Academy of Science (PNAS). The app demonstrates the efficacy of the "dividing groups" strategy and the "balancing groups" strategy described in our article using network-based visualizations and accompanying graphs. 
 
-Under the Simulation tab is a microsimulation similar to those we ran for our research article and a corresponding social network visualization.
+Under the **Simulation** tab, users can modify the network size, infection rate, and intervention type and view the progression of an infectious disease through the generated social network. Disease and network metrics are presented on the graph. Network size and other population parameters have been limited for memory purposes.
 
-The remaining 3 tabs (new cases, dynamics, and network ties) are animated versions of the figures we presented in our article.
-
-The app is best viewed on a laptop or desktop at 1920 x 1080 resolution. You can find the app [here.]( https://gdewey.shinyapps.io/covid_sn/)
+The app is best viewed on a laptop or desktop at 1920 x 1080 resolution. You can find the app [here.](link to be inserted once URL is finalized)
 
 ## Version History
+
+### Version 1.0
+- First version based on accepted manuscript.
+- Microsimulation updated to use accepted version of code.
 
 ### Version 0.1
 - Initial release
