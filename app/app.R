@@ -14,9 +14,7 @@ library(shinythemes)
 library(Matrix) 
 library(reldist) 
 library(igraph) 
-library(xtable)
 library(extrafont)
-library(tidyverse)
 
 # Load data
 # table1 = read_csv("vistablec1.csv")
@@ -99,13 +97,11 @@ ui = navbarPage(
                                         min = 0, 
                                         max = 60,
                                         step = 5,
-                                        animate = animationOptions(interval = 1500, loop = FALSE)
-                            ),
+                                        animate = animationOptions(interval = 1800, loop = FALSE)),
                             selectInput(inputId = "setting",
                                         label = "Intervention",
                                         choices = choice_to_number,
-                                        selected = choice_to_number["No Intervention"]
-                                        ),
+                                        selected = choice_to_number["No Intervention"]),
                             actionButton("apply", label = "Apply Settings"),
                             includeMarkdown("microsim.md")                      
                             ),
@@ -291,12 +287,12 @@ server <- function(input, output) {
         #Set B (Concise ones for demo)
         
         #Things to comment out for simulation
-        people_n = 80
-        infection_rate = 0.05
-        s = 1
-        period = 60
+        # people_n = 80
+        # infection_rate = 0.05
+        # s = 1
+        # period = 60
         
-        h = 20345896
+        h = 824
         c_number = c(people_n/4,2,2,2,10,10,10,10)
         c_number2 = c_number*c(1, rep(2, times = 7))
         names_vec = paste0("A", 1:length(c_number)) #Create 8 sectors (A1 - A8)
@@ -578,7 +574,6 @@ server <- function(input, output) {
         sd8 = sd(degree8) 
         sd9 = sd(degree9) 
         
-        
         result = data.frame(h,giniA1,giniA2,giniA3,giniA4,giniA5,giniA6,giniA7,
                             giniA8,mean,sd,networkN,Reff,mean1,mean2,mean3,
                             mean4,mean5,mean6,mean7,mean8,mean9,sd1,sd2,sd3,sd4,
@@ -598,7 +593,7 @@ server <- function(input, output) {
         # rm(list = ls())
         
         #3.2. Loading packages
-        library(Matrix) #for sparse matrix calculation
+        # library(Matrix) #for sparse matrix calculation
         sample1 = function(x) 
             {sample(c(0,1),size=1,replace=FALSE,prob=c(1-x,x))}
         
@@ -611,28 +606,19 @@ server <- function(input, output) {
         e_period = 3 #constant
         i_period = 3 #mean (inverse of the parameter of geometric distribution) #%# modified in R7
         r_period = 300 #we do not do SEIRS model (everybody will get immunity until the end)
-        # period = roundmax()
+        period = roundmax()
         historical = 0 #%# modified in R8 (1 for R8)
         
         #3.4. Parameters for each setting
-        # s=6 #Fixed
+        #s=6 #Fixed
         #h=1 #Vary
         #3.5. Preparing for the result (output) table
         
         #4. Infection for 300 days/rounds  
         #4.1. Importing the relevant files (ndata1 and xdata0)
         # for (h in 1:1000) {
-            set.seed(h)
-            # setwd("/Users/akihironishi/Dropbox/ArticlesAN/AN20COVI4/RC/R0/data") 
-            # ndata1 = read.csv(paste0("ndata1_R0_s",s,"_h",h,"_0810.csv"))
-            # xdata0 = readMM(paste0("xdata0_R0_s",s,"_h",h,"_0810.mtx"))
-            #%# modified in R5 (a: weak ties only/b: close ties only)
-            
-            #For quality check (N=80)
-            #setwd("/Users/akihironishi/Dropbox/ArticlesAN/AN20COVI4/RC/sample") 
-            #ndata1 = read.csv(paste0("ndata1_sample_s",s,"_h",h,"_0801.csv"))
-            #xdata0 = readMM(paste0("xdata0_sample_0801_s",s,"_h",h,".mtx"))
-            
+            # set.seed(h)
+
             #4.2. Setting in ndata1
             ndata1$state  = sample(c(rep(1, seed_number), #state2=#infectious, #state1=E (#seed=10),#state3=R
                                      rep(0, people_n-seed_number)), #state0=#susceptible
@@ -678,97 +664,6 @@ server <- function(input, output) {
                     ndata1$new_r = 0
                     #print(m)
                 }
-                    
-                ndata_for_plot = ndata1 %>% filter(round == period)
-                
-                g = graph_from_adjacency_matrix(xdata0, mode = "undirected")
-                
-                plot.igraph(g,
-                            layout = layout.kamada.kawai, #or layout.circle
-                            #NODE/VERTEX
-                            vertex.shape = "circle", #Shape: none, circle, square,..
-                            vertex.size = 20, #Size: default is 15
-                            vertex.color = color_vector[ndata_for_plot$state+1], #Color
-                            vertex.frame.color = "white", #Color of the frame: No need!
-                            vertex.label = ndata_for_plot$ID, 
-                            vertex.label.cex = 1, #Font size
-                            vertex.label.color = "white", #Label color: White is the best idea (data-ink ratio)
-                            vertex.label.family = "Arial" , #Sans-serif is better than serif
-                            #LINK/EDGE
-                            # edge.color = y$type, #random
-                            edge.width = 1,
-                            edge.arrow.width = 0,
-                            edge.arrow.size = 0,
-                            edge.lty = 1, #Line type, 0:blank, 1:solid, 2:dashed, 3: dotted, 4: dotdash,..
-                            edge.label = NA,
-                            edge.label.cex = NA,
-                            edge.label.color = NA,
-                            edge.label.family = NA,
-                            #edge.curved = 0.1, #Make edges curve default (varies to show duplicates)
-                )
-                
-                legend("topleft", 
-                       bty = "n", 
-                       legend = c("Susceptible", "Exposed", "Infected", "Recovered"),
-                       fill = color_vector, 
-                       border = NA,
-                       cex = 1.5)
-                
-                legend("topright",
-                       bty = "n",
-                       legend = c(paste("Mean Degree: ", result$mean),
-                                  paste("SD: ", result$sd),
-                                  paste("NetworkN: ", result$networkN), 
-                                  paste("Reff: ", result$Reff)),
-                       border = NA,
-                       cex = 1.5)
-                
-                sus = ndata_for_plot %>% count(state) %>% filter(state == 0) %>% select(n)
-                exp = ndata_for_plot %>% count(state) %>% filter(state == 1) %>% select(n)
-                inf = ndata_for_plot %>% count(state) %>% filter(state == 2) %>% select(n)
-                rec = ndata_for_plot %>% count(state) %>% filter(state == 3) %>% select(n)
-                
-                if(period == 0){
-                    legend("bottomright",
-                           bty = "n",
-                           legend = c(paste("Susceptible: ", ifelse(is.na(sus), 0, sus/2)),
-                                      paste("Exposed: ", ifelse(is.na(exp), 0, exp/2)),
-                                      paste("Infected: ", ifelse(is.na(inf), 0, inf/2)),
-                                      paste("Recovered: ", ifelse(is.na(rec), 0, rec/2))),
-                           fill = NA,
-                           border = NA,
-                           cex = 1.75)
-                }
-                else{
-                    legend("bottomright",
-                           bty = "n",
-                           legend = c(paste("Susceptible: ", ifelse(is.na(sus), 0, sus)),
-                                      paste("Exposed: ", ifelse(is.na(exp), 0, exp)),
-                                      paste("Infected: ", ifelse(is.na(inf), 0, inf)),
-                                      paste("Recovered: ", ifelse(is.na(rec), 0, rec))),
-                           fill = NA,
-                           border = NA,
-                           cex = 1.75)
-                }  
-                
-                result
-                
-                # # if (historical == 1) {
-                # xdata0_family = xdata0
-                # xdata0_family[as.numeric(xdata0_family)<1] = 0 #Make all the non-family ties disappear 
-                # 
-                # ndata1$family_contacts = NA  #described later
-                # ndata1$inf_length = rgeom(people_n,prob=(1/i_period)) + 1 #mean=3 (Infectious period is determined by geometric distribution (for R, requires + 1))
-                # #NOTE: If infected, they stay in I(4) or I(5)+I(6) for "inf_length" days (after 3 days of E). 
-                # ndata1$symptomatic = sample(c(0,1),people_n,replace=T,prob=c(0.45,0.55))
-                # #NOTE: If infected, each individual has 45% probability for I(4) and 55% probability for I(5)+I(6).
-                # ndata1$when_symptomatic = rbinom(people_n,size=ndata1$inf_length,prob=0.5) #mean=1.5 (aka duration of presymptomatic period)
-                # #NOTE: If selected for symptomatic, when does I(6) start? 
-                
-                #NOTE: I(2) will go, and I-asymptomatic(4), I-presymptomatic(5), and I-postsymptomatic(6) will be used.
-                #NOTE: I-asymptomatic(4) lasts for all the I periods once determined.
-                #NOTE: I-presymptomatic(5) lasts for "when_symptomatic" days, and the state moves to I(6) 
-                #NOTE: This is fine because individuals would have at most 1 infection in lifetime here in the simulations.
                 
                 for (m in 1:period) {
                     ndata1$round = m
@@ -821,6 +716,83 @@ server <- function(input, output) {
                     
                     #print(m)
                 }
+                
+                ndata_for_plot = ndata1 %>% filter(round == period)
+                
+                g = graph_from_adjacency_matrix(xdata0, mode = "undirected")
+                
+                plot.igraph(g,
+                            layout = layout_with_kk, #or layout.circle ## look at different layouts
+                            #NODE/VERTEX
+                            vertex.shape = "circle", #Shape: none, circle, square,..
+                            vertex.size = 5, #Size: default is 15
+                            vertex.color = color_vector[ndata_for_plot$state+1], #Color
+                            vertex.frame.color = "black", #Color of the frame: No need!
+                            vertex.label = NA, 
+                            #LINK/EDGE
+                            # edge.color = y$type, #random
+                            edge.width = 1,
+                            edge.arrow.width = 0,
+                            edge.arrow.size = 0,
+                            edge.lty = 1, #Line type, 0:blank, 1:solid, 2:dashed, 3: dotted, 4: dotdash,..
+                            edge.label = NA,
+                            edge.label.cex = NA,
+                            edge.label.color = NA,
+                            edge.label.family = NA,
+                            main = paste("Day", period),
+                )
+                
+                legend("topleft", 
+                       bty = "n", 
+                       legend = c("Susceptible", "Exposed", "Infectious", "Recovered"),
+                       fill = color_vector, 
+                       border = NA,
+                       cex = 1.5)
+                
+                legend("topright",
+                       bty = "n",
+                       legend = c(paste("Mean Degree: ", round(result$mean, digits = 2)),
+                                  paste("SD: ", round(result$sd, digits = 2)),
+                                  paste("NetworkN: ", round(result$networkN, digits = 2)), 
+                                  paste("Reff: ", round(result$Reff, digits = 2))),
+                       border = NA,
+                       cex = 1.5)
+                
+                sus = ndata_for_plot %>% count(state) %>% filter(state == 0) %>% select(n)
+                exp = ndata_for_plot %>% count(state) %>% filter(state == 1) %>% select(n)
+                inf = ndata_for_plot %>% count(state) %>% filter(state == 2) %>% select(n)
+                rec = ndata_for_plot %>% count(state) %>% filter(state == 3) %>% select(n)
+                
+                legend("bottomleft",
+                       bty = "n",
+                       legend = c(paste("Cumulative Incidence: ", round(cis[period], digits = 2)),
+                                  paste("Prevalence: ", ifelse(is.na(inf), 0, round(inf/people_n, digits = 2)))),
+                       fill = NA,
+                       border = NA,
+                       cex = 1.5)
+                
+                # if(period == 0){
+                #     legend("bottomright",
+                #            bty = "n",
+                #            legend = c(paste("Susceptible: ", ifelse(is.na(sus), 0, sus/2)),
+                #                       paste("Exposed: ", ifelse(is.na(exp), 0, exp/2)),
+                #                       paste("Infectious: ", ifelse(is.na(inf), 0, inf/2)),
+                #                       paste("Recovered: ", ifelse(is.na(rec), 0, rec/2))),
+                #            fill = NA,
+                #            border = NA,
+                #            cex = 1.75)
+                # }
+                # else{
+                legend("bottomright",
+                           bty = "n",
+                           legend = c(paste("Susceptible: ", ifelse(is.na(sus), 0, sus)),
+                                      paste("Exposed: ", ifelse(is.na(exp), 0, exp)),
+                                      paste("Infectious: ", ifelse(is.na(inf), 0, inf)),
+                                      paste("Recovered: ", ifelse(is.na(rec), 0, rec))),
+                           fill = NA,
+                           border = NA,
+                           cex = 1.75)
+                
             }
                 # new_exp_vec[((1+period)*s-period):((1+period)*s)] = new_exp
                 # prev_vec[((1+period)*s-period):((1+period)*s)] = prevs
