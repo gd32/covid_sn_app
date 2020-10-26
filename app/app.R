@@ -15,11 +15,7 @@ library(Matrix)
 library(reldist) 
 library(igraph) 
 library(extrafont)
-
-# Load data
-# table1 = read_csv("vistablec1.csv")
-# table2 = read_csv("vistable2.csv")
-# table3 = read_csv("vistable3.csv")
+library(RColorBrewer)
 
 # Create vectors for labelling/coloring plots
 label_vector = c("Default scenario (-0/6)",
@@ -30,13 +26,6 @@ label_vector = c("Default scenario (-0/6)",
                  "D + B")
 
 label_vector2 = label_vector[-1]
-
-color_vector = c("red", #colors for the different interventions 
-                 "blue",
-                 "purple",
-                 "gold2",
-                 "skyblue2",
-                 "darkolivegreen2")
 
 choice_vec = c("No Intervention", 
                "Intermediate Lockdown", 
@@ -81,7 +70,7 @@ ui = navbarPage(
                         sidebarPanel(
                             numericInput(inputId = "pop_size", 
                                          label = "Population Size",
-                                         value = 80, 
+                                         value = 40, 
                                          min = 40,
                                          max = 160,
                                          step = 20),
@@ -625,6 +614,10 @@ server <- function(input, output) {
                                    size = people_n)
             ndata1$state_end = ifelse(ndata1$state==1,ndata1$round+e_period,999)
             
+            # Create graph for set coordinates for plotting
+            g_coords = graph_from_adjacency_matrix(xdata0, weighted = "max", diag = FALSE)
+            g_coords = layout_with_fr(g_coords)
+            
             #4.3. Simulations
             new_exp = seed_number/people_n #new infections vector (first component)
             cis = seed_number/people_n #cumulative incidences vector (first component)
@@ -665,69 +658,17 @@ server <- function(input, output) {
                     #print(m)
                 }
                 
-                for (m in 1:period) {
-                    ndata1$round = m
-                    
-                    #Step A. Implement first all the automatic changes when the day/round changes
-                    #NOTE: The taf for the state chage is "state_end", which turns to be the same as the present "round"
-                    
-                    #A1. E(1) to I(4 or 5)
-                    ndata1[ndata1$state == 1 & (ndata1$round == ndata1$state_end),"new_i"] = 1
-                    #I(4)
-                    ndata1[ndata1$state==1 & ndata1$new_i==1 & ndata1$symptomatic==0,"state"] = 4     
-                    ndata1[ndata1$state==4 & ndata1$new_i==1 & ndata1$symptomatic==0,"state_end"] = ndata1[ndata1$state==4 & ndata1$new_i==1 & ndata1$symptomatic==0,"round"] + ndata1[ndata1$state==4 & ndata1$new_i==1 & ndata1$symptomatic==0,"inf_length"]
-                    #NOTE: When state changes, state_end date/round needs to be updated.
-                    #I(5)
-                    ndata1[ndata1$state==1 & ndata1$new_i==1 & ndata1$symptomatic==1,"state"] = 5     
-                    ndata1[ndata1$state==5 & ndata1$new_i==1 & ndata1$symptomatic==1,"state_end"] = ndata1[ndata1$state==5 & ndata1$new_i==1 & ndata1$symptomatic==1,"round"] + ndata1[ndata1$state==5 & ndata1$new_i==1 & ndata1$symptomatic==1,"when_symptomatic"]
-                    
-                    #A1x. I(5) to I(6)
-                    ndata1[ndata1$state == 5 & (ndata1$round == ndata1$state_end),"new_i"] = 2 #2 is new flag for symptom acquired
-                    ndata1[ndata1$state == 5 & (ndata1$round == ndata1$state_end),"state"] = 6    
-                    ndata1[ndata1$state==6 & ndata1$new_i==2 & ndata1$symptomatic==1,"state_end"] = ndata1[ndata1$state==6 & ndata1$new_i==2 & ndata1$symptomatic==1,"round"] + ndata1[ndata1$state==6 & ndata1$new_i==2 & ndata1$symptomatic==1,"inf_length"] - ndata1[ndata1$state==6 & ndata1$new_i==2 & ndata1$symptomatic==1,"when_symptomatic"]
-                    
-                    #A2. I(4,6) to R(3)
-                    ndata1[ndata1$state %in% c(4,6) & (ndata1$round == ndata1$state_end),"new_r"] = 1
-                    ndata1[ndata1$state %in% c(4,6) & ndata1$new_r==1,"state"] = 3     
-                    ndata1[ndata1$state==3 & ndata1$new_r==1,"state_end"] = ndata1[ndata1$state==3 & ndata1$new_r==1,"state_end"] + r_period
-                    
-                    #Step B. Implement second all the infection events after all the statuses are updated
-                    #NOTE: Here, making secondary infections from primary cases
-                    #B1. For possible state change from S(0) to E(1)
-                    ndata1$contacts = as.matrix(xdata0 %*% ifelse(ndata1$state %in% c(4,5),1,0)) #contact with I (state== 4 or 5)
-                    ndata1$family_contacts = as.matrix(xdata0_family %*% ifelse(ndata1$state==6,1,0)) #family member only
-                    #NOTE: people with S(0) gets infected from individuals who are not self-isolated = I(4) or I(5)
-                    #NOTE: or from individual who are self-isolated but are their family members
-                    #NOTE: sum them all (with weights) are the number of contacts in the present round
-                    ndata1$new_e = as.numeric(lapply(1-(1-infection_rate)^(ndata1$contacts+ndata1$family_contacts), sample1)) #possible infections 
-                    ndata1$new_e = ifelse(ndata1$state==0,ndata1$new_e,0) #only state=0 can get a new infection (latent period)
-                    ndata1[ndata1$state==0 & ndata1$new_e==1,"state"] = 1 
-                    ndata1[ndata1$state==1 & ndata1$new_e==1,"state_end"] = ndata1[ndata1$state==1 & ndata1$new_e==1,"round"] + e_period
-                    
-                    #Step C. Record the results
-                    new_exp = c(new_exp,sum(ndata1$new_e==1)/people_n)
-                    cis = c(cis,sum(ndata1$state %in% c(1,3,4,5,6))/people_n)
-                    prevs = c(prevs,sum(ndata1$state %in% c(4,5,6))/people_n)
-                    
-                    #Step D. Erasing "new" states because they are no longer new after all the above actions
-                    ndata1$new_e = 0
-                    ndata1$new_i = 0
-                    ndata1$new_r = 0
-                    
-                    #print(m)
-                }
-                
                 ndata_for_plot = ndata1 %>% filter(round == period)
-                
-                g = graph_from_adjacency_matrix(xdata0, mode = "undirected")
-                
+           
+                g = graph_from_adjacency_matrix(xdata0, weighted = "max", diag = FALSE)
+
                 plot.igraph(g,
-                            layout = layout_with_kk, #or layout.circle ## look at different layouts
+                            layout = g_coords, #or layout.circle ## look at different layouts
                             #NODE/VERTEX
                             vertex.shape = "circle", #Shape: none, circle, square,..
                             vertex.size = 5, #Size: default is 15
-                            vertex.color = color_vector[ndata_for_plot$state+1], #Color
-                            vertex.frame.color = "black", #Color of the frame: No need!
+                            vertex.color = brewer.pal(n = 4, name = "Dark2")[ndata_for_plot$state+1], #Color
+                            vertex.frame.color = NA, #Color of the frame: No need!
                             vertex.label = NA, 
                             #LINK/EDGE
                             # edge.color = y$type, #random
@@ -745,7 +686,7 @@ server <- function(input, output) {
                 legend("topleft", 
                        bty = "n", 
                        legend = c("Susceptible", "Exposed", "Infectious", "Recovered"),
-                       fill = color_vector, 
+                       fill = brewer.pal(n = 4, name = "Dark2"), 
                        border = NA,
                        cex = 1.5)
                 
@@ -771,18 +712,6 @@ server <- function(input, output) {
                        border = NA,
                        cex = 1.5)
                 
-                # if(period == 0){
-                #     legend("bottomright",
-                #            bty = "n",
-                #            legend = c(paste("Susceptible: ", ifelse(is.na(sus), 0, sus/2)),
-                #                       paste("Exposed: ", ifelse(is.na(exp), 0, exp/2)),
-                #                       paste("Infectious: ", ifelse(is.na(inf), 0, inf/2)),
-                #                       paste("Recovered: ", ifelse(is.na(rec), 0, rec/2))),
-                #            fill = NA,
-                #            border = NA,
-                #            cex = 1.75)
-                # }
-                # else{
                 legend("bottomright",
                            bty = "n",
                            legend = c(paste("Susceptible: ", ifelse(is.na(sus), 0, sus)),
