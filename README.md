@@ -6,6 +6,10 @@ Under the **Microsimulation** tab, users can modify the network size, infection 
 
 ## Version History
 
+### Version 1.1
+- Updated color scheme and graph paramaterization.
+- Reordered tabs which now includes the *Details* tab.
+
 ### Version 1.0
 - First version based on accepted manuscript.
 - Microsimulation updated to use accepted version of code.
