@@ -36,7 +36,7 @@ choice_vec = c("No Intervention",
 
 choice_ft = as.factor(choice_vec)
 
-color_vec = c("grey60", "grey30", "violetred4", "rosybrown1")
+color_vec = c("grey60", "grey30", "dodgerblue4", "slategray1")
 
 vec_map = c("No Intervention" = 1, 
             "Intermediate Lockdown" = 2, 
@@ -58,14 +58,9 @@ choice_to_snumber = vec_map2[as.character(choice_ft)]
 # Define UI 
 ui = navbarPage(
     
-    title = "Network Interventions for Managing the COVID-19 Pandemic and Sustaining Economy",
+    title = "Nishi Lab at UCLA - COVID-19 Interactive Network Simulation",
     
     theme = shinytheme("flatly"),
-    
-    tabPanel(title = "Introduction",
-             
-             includeMarkdown("intro.md"),
-             hr()),
     
     tabPanel(title = "Microsimulation",
                         
@@ -102,7 +97,11 @@ ui = navbarPage(
                             tableOutput("summary")
                         )
                 ),
-   
+    tabPanel(title = "Details",
+             
+             includeMarkdown("details.md"),
+             hr()),
+    
     tabPanel(title = "About",
              includeMarkdown("authors.md"),
              hr(),
@@ -517,16 +516,24 @@ server <- function(input, output) {
                             edge.arrow.size = 0,
                             edge.lty = 1, #Line type, 0:blank, 1:solid, 2:dashed, 3: dotted, 4: dotdash,..
                             edge.label = NA,
-                            edge.label.cex = NA,
+                            edge.label.cex = NA, 
                             edge.label.color = NA,
                             edge.label.family = NA,
                             main = paste("Day", period),
                 )
                 
+                sus = ndata_for_plot %>% count(state) %>% filter(state == 0) %>% select(n)
+                exp = ndata_for_plot %>% count(state) %>% filter(state == 1) %>% select(n)
+                inf = ndata_for_plot %>% count(state) %>% filter(state == 2) %>% select(n)
+                rec = ndata_for_plot %>% count(state) %>% filter(state == 3) %>% select(n)
+                
                 legend("topleft", 
                        bty = "n", 
-                       legend = c("Susceptible", "Exposed", "Infectious", "Recovered"),
-                       fill = brewer.pal(n = 4, name = "Dark2"), 
+                       legend = c(paste("Susceptible: ", ifelse(is.na(sus), 0, sus)),
+                                  paste("Exposed: ", ifelse(is.na(exp), 0, exp)),
+                                  paste("Infectious: ", ifelse(is.na(inf), 0, inf)),
+                                  paste("Recovered: ", ifelse(is.na(rec), 0, rec))),
+                       fill = color_vec, 
                        border = NA,
                        cex = 1.5)
                 
@@ -539,10 +546,6 @@ server <- function(input, output) {
                        border = NA,
                        cex = 1.5)
                 
-                sus = ndata_for_plot %>% count(state) %>% filter(state == 0) %>% select(n)
-                exp = ndata_for_plot %>% count(state) %>% filter(state == 1) %>% select(n)
-                inf = ndata_for_plot %>% count(state) %>% filter(state == 2) %>% select(n)
-                rec = ndata_for_plot %>% count(state) %>% filter(state == 3) %>% select(n)
                 
                 legend("bottomleft",
                        bty = "n",
@@ -551,16 +554,7 @@ server <- function(input, output) {
                        fill = NA,
                        border = NA,
                        cex = 1.5)
-                
-                legend("bottomright",
-                           bty = "n",
-                           legend = c(paste("Susceptible: ", ifelse(is.na(sus), 0, sus)),
-                                      paste("Exposed: ", ifelse(is.na(exp), 0, exp)),
-                                      paste("Infectious: ", ifelse(is.na(inf), 0, inf)),
-                                      paste("Recovered: ", ifelse(is.na(rec), 0, rec))),
-                           fill = NA,
-                           border = NA,
-                           cex = 1.75)
+
                 
             }
 

@@ -8,11 +8,7 @@ This section of the app will define and further describe terminology used in the
 
 **Degree**: The number of connections each node has in the network.
 
-**Network N ($N$)**: The network N is defined as:
-
-$$ N = m + s^2/m$$
-
-and refers to the number of network ties per infected individual. This value differs from the population size as not all individauls in a social network are connected and that individuals with a higher degree have a higher risk of infecting others in the network.
+**Network N**: The network N refers to the number of network ties per infected individual. This value differs from the population size as not all individauls in a social network are connected and that individuals with a higher degree have a higher risk of infecting others in the network.
 
 **R<sub>eff</sub>**: The effective reprdouction number. This is the average number of secondary transmissions caused by a single primary case.
 
@@ -32,4 +28,4 @@ and refers to the number of network ties per infected individual. This value dif
 
 The original simulation data and code can be found on Akihiro Nishi's [Github page](https://github.com/akihironishi/covid19_pnas) as well as at the UCLA Fielding School of Public Health's [Public Data Portal](https://publicdata.ph.ucla.edu/pages/).
 
-Code for this Shiny app and the contained network visualizations is available on request by emailing the developer, George Dewey [here.](gdewey@ucla.edu)
+Code for this Shiny app and the contained network visualizations is available on request by emailing the developer, George Dewey, [here.](gdewey@ucla.edu)
