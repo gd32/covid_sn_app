@@ -36,6 +36,8 @@ choice_vec = c("No Intervention",
 
 choice_ft = as.factor(choice_vec)
 
+color_vec = c("grey60", "grey30", "violetred4", "rosybrown1")
+
 vec_map = c("No Intervention" = 1, 
             "Intermediate Lockdown" = 2, 
             "Strict Lockdown" = 3, 
@@ -58,7 +60,7 @@ ui = navbarPage(
     
     title = "Network Interventions for Managing the COVID-19 Pandemic and Sustaining Economy",
     
-    theme = shinytheme("darkly"),
+    theme = shinytheme("flatly"),
     
     tabPanel(title = "Introduction",
              
@@ -72,7 +74,7 @@ ui = navbarPage(
                                          label = "Population Size",
                                          value = 40, 
                                          min = 40,
-                                         max = 160,
+                                         max = 100,
                                          step = 20),
                             numericInput(inputId = "infection_rate",
                                          label = "Infection Rate", 
@@ -100,85 +102,7 @@ ui = navbarPage(
                             tableOutput("summary")
                         )
                 ),
-    
-    # tabPanel(title = "New Cases", 
-    #          
-    #         sidebarPanel(
-    #         # Round slider
-    #         sliderInput(inputId = 'roundmax', 
-    #                     label = "Day", 
-    #                     value = 150,
-    #                     min = 0, 
-    #                     max = 150,
-    #                     step = 5,
-    #                     animate = animationOptions(interval = 500, loop = FALSE)
-    #             ),
-    #              
-    #         # Choose scenarios to display
-    #         checkboxGroupInput(inputId = 'Category',
-    #                            label = "Scenario",
-    #                            choices = choice_to_snumber,
-    #                            selected = c("S1", "S2", "S3", "S4", "S5", "S6")
-    #             ) 
-    #              
-    #          ),
-    #     mainPanel(
-    #         plotOutput("incidence")
-    #     )
-    # ),
-    # 
-    # tabPanel(title = "Dynamics",
-    # 
-    #          sidebarPanel(
-    #              # Round slider
-    #              sliderInput(inputId = 'roundmax',
-    #                          label = "Day",
-    #                          value = 150,
-    #                          min = 0, 
-    #                          max = 150,
-    #                          step = 5,
-    #                          animate = animationOptions(interval = 750, loop = FALSE)
-    #                          ),
-    # 
-    #              # Choose scenarios to display
-    #              checkboxGroupInput(inputId = 'Category',
-    #                                 label = "Scenario",
-    #                                 choices = choice_to_snumber,
-    #                                 selected = c("S1", "S2", "S3", "S4", "S5", "S6")
-    #              )
-    # 
-    #          
-    #     ),
-    #     mainPanel(
-    #         plotOutput("cumulative")
-    #     )
-    # ),
-    # 
-    # tabPanel(title = "Network Ties",
-    # 
-    #          sidebarPanel(
-    # 
-    #              sliderInput(inputId = 'ties',
-    #                          label = "Number of Network Ties",
-    #                          value = 1244,
-    #                          min = 0,
-    #                          max = 1244,
-    #                          step = 50,
-    #                          animate = animationOptions(interval = 1000, loop = FALSE)
-    #              ),
-    # 
-    #              checkboxGroupInput(inputId = 'Category',
-    #                                 label = "Scenario",
-    #                                 choices = choice_to_snumber,
-    #                                 selected = c("S1", "S2", "S3", "S4", "S5", "S6")
-    #              )
-    # 
-    #          ),
-    #          mainPanel(
-    #              plotOutput("density")
-    #     )
-    # ),
-    # 
+   
     tabPanel(title = "About",
              includeMarkdown("authors.md"),
              hr(),
@@ -195,71 +119,10 @@ ui = navbarPage(
 # Define server logic
 server <- function(input, output) {
 
-    roundmax = reactive({input$period})
+    # Reactive functions for updating setting/period
+    roundmax = reactive({input$period}) 
     setting = reactive({input$setting})
-    # ties = reactive({input$ties})
-    # period = reactive({input$period})
-    
-    # output$incidence = renderPlot({
-    #     
-    #    table1 %>% filter(Category %in% category()) %>%
-    #         ggplot(aes(x=round)) + 
-    #         geom_ribbon(aes(ymin=v25,ymax=v75,fill=Category),color=NA,size=0.2,alpha=0.2) +
-    #         geom_line(aes(y=median,color=Category,lty=Category),size=0.75) +
-    #         theme_minimal() + 
-    #         theme(legend.position = "bottom", 
-    #               legend.title = element_blank(),
-    #               legend.text = element_text(size = 12),
-    #               legend.background = element_rect(color = "dodgerblue4", size = 0.5, linetype = "solid"),
-    #               axis.text = element_text(size = 14),
-    #               axis.title = element_text(size = 18, face = "bold")) + 
-    #         ylim(0,400) + 
-    #         xlim(0, roundmax()) +
-    #         xlab("Day") + ylab("Number of new cases / 10,000 population \n") +
-    #         scale_color_manual(values=color_vector,labels=label_vector) + 
-    #         scale_fill_manual(values=color_vector,labels=label_vector) +
-    #         scale_linetype_manual(values=c(1:5,1,1,1),labels=label_vector) 
-    #     }, width = 1100, height = 900)
-    
-    # output$cumulative = renderPlot({
-    #     
-    #     table2 %>% filter(Category %in% category()) %>%
-    #             ggplot(aes(x=round)) + 
-    #             geom_ribbon(aes(ymin=v25,ymax=v75,fill=Category),color=NA,size=0.2,alpha=0.2) +
-    #             geom_line(aes(y=median,color=Category,lty=Category),size=0.75) +
-    #             guides(fill=guide_legend(ncol=2),color=guide_legend(ncol=2),lty=guide_legend(ncol=2)) +
-    #             theme_minimal() + 
-    #             theme(legend.position = "bottom", 
-    #                   legend.title = element_blank(),
-    #                   legend.text = element_text(size = 12),
-    #                   legend.background = element_rect(color = "dodgerblue4", size = 0.5, linetype = "solid"),
-    #                   axis.text = element_text(size = 14),
-    #                   axis.title = element_text(size = 18, face = "bold")) + 
-    #             ylim(0,1) + xlim(0, roundmax()) +
-    #             xlab("Day") + ylab("Cumulative incidence \n") +
-    #             scale_color_manual(values=color_vector,labels=label_vector) + 
-    #             scale_fill_manual(values=color_vector,labels=label_vector) +
-    #             scale_linetype_manual(values=c(1:5,1,1,1),labels=label_vector) 
-    # 
-    # }, width = 1100, height = 900)
-    # 
-    # output$density = renderPlot({
-    # 
-    #         table3 %>% filter(setting %in% category()) %>%
-    #         ggplot(aes(x=degree, color=setting),fill=NA) +
-    #         geom_density(bw=50,size=0.75) +
-    #         theme_minimal() + 
-    #         theme(legend.position = "bottom", 
-    #               legend.title = element_blank(),
-    #               legend.text = element_text(size = 12),
-    #               legend.background = element_rect(color = "dodgerblue4", size = 0.5, linetype = "solid"),
-    #               axis.text = element_text(size = 14),
-    #               axis.title = element_text(size = 18, face = "bold")) +
-    #         ylim(0,0.007) + xlim(0, ties()) +
-    #         xlab("Degree (number of network ties)") + ylab("Density \n") +
-    #         scale_color_manual(values=color_vector,labels=label_vector)
-    # }, width = 1100, height = 900)
-    
+   
     ## For simulation
     
     output$sn = renderPlot({
@@ -273,15 +136,9 @@ server <- function(input, output) {
                  infection_rate = input$infection_rate
                  s = input$setting})
         
-        #Set B (Concise ones for demo)
+        #Set parameters - based off original code's validation set
         
-        #Things to comment out for simulation
-        # people_n = 80
-        # infection_rate = 0.05
-        # s = 1
-        # period = 60
-        
-        h = 824
+        h = 820
         c_number = c(people_n/4,2,2,2,10,10,10,10)
         c_number2 = c_number*c(1, rep(2, times = 7))
         names_vec = paste0("A", 1:length(c_number)) #Create 8 sectors (A1 - A8)
@@ -314,10 +171,10 @@ server <- function(input, output) {
         set.seed(h)
         ndata = data.frame(ID = 1:people_n, state = NA)
         ndata$round = 0
-        ndata$new_e = 0 #new infection at the round: this sudo applies only at round=0
-        ndata$new_i = 0 #new infection at the round: this sudo applies only at round=0
-        ndata$new_r = 0 #new recovery at the round: this sudo applies only at round=0
-        ndata$state_end = ifelse(ndata$state==1,ndata$round+e_period,999) #this sudo applies only at round=0, 999 is default
+        ndata$new_e = 0 #new infection at the round: this applies only at round=0
+        ndata$new_i = 0 #new infection at the round: this applies only at round=0
+        ndata$new_r = 0 #new recovery at the round: this applies only at round=0
+        ndata$state_end = ifelse(ndata$state==1,ndata$round+e_period,999) #this applies only at round=0, 999 is default
         ndata$contacts = NA
         ndata[,names_vec] = 0 # Fill dataframe with NAs (A1-A8 sectors), 0 is the indicator for no group assignment
         ndata[,paste0(names_vec,"_f")] = NA #for indication flags
@@ -577,36 +434,18 @@ server <- function(input, output) {
         ################################################################################
         #SECTION B: Network-based SEIR Model
         
-        #3. Settings
-        #3.1. Cleaning environment
-        # rm(list = ls())
-        
-        #3.2. Loading packages
-        # library(Matrix) #for sparse matrix calculation
         sample1 = function(x) 
             {sample(c(0,1),size=1,replace=FALSE,prob=c(1-x,x))}
         
         #3.3. Parameters
-        #Set A (Real ones)
-        # people_n = 10000
-        seed_number = 10 #number of initial infections
-        # infection_rate = 0.04458 #%# modified in R6
-        # infection_rate = 0.10
-        e_period = 3 #constant
-        i_period = 3 #mean (inverse of the parameter of geometric distribution) #%# modified in R7
-        r_period = 300 #we do not do SEIRS model (everybody will get immunity until the end)
+        seed_number = 10 # Number of initial infections
+        e_period = 3 # Exposure period
+        i_period = 3 # Infectious period
+        r_period = 300 # Full length of recovery period (based on original simulation; since we have lower sample sizes in the app microsimulation, this is somewhat irrelevant)
         period = roundmax()
-        historical = 0 #%# modified in R8 (1 for R8)
-        
-        #3.4. Parameters for each setting
-        #s=6 #Fixed
-        #h=1 #Vary
-        #3.5. Preparing for the result (output) table
+        historical = 0 
         
         #4. Infection for 300 days/rounds  
-        #4.1. Importing the relevant files (ndata1 and xdata0)
-        # for (h in 1:1000) {
-            # set.seed(h)
 
             #4.2. Setting in ndata1
             ndata1$state  = sample(c(rep(1, seed_number), #state2=#infectious, #state1=E (#seed=10),#state3=R
@@ -665,14 +504,15 @@ server <- function(input, output) {
                 plot.igraph(g,
                             layout = g_coords, #or layout.circle ## look at different layouts
                             #NODE/VERTEX
-                            vertex.shape = "circle", #Shape: none, circle, square,..
-                            vertex.size = 5, #Size: default is 15
-                            vertex.color = brewer.pal(n = 4, name = "Dark2")[ndata_for_plot$state+1], #Color
+                            vertex.shape = "square", #Shape: none, circle, square,..
+                            vertex.size = 2.5, #Size: default is 15
+                            # vertex.color = brewer.pal(n = 4, name = "Dark2")[ndata_for_plot$state+1], #Color
+                            vertex.color = color_vec[ndata_for_plot$state+1],
                             vertex.frame.color = NA, #Color of the frame: No need!
                             vertex.label = NA, 
                             #LINK/EDGE
                             # edge.color = y$type, #random
-                            edge.width = 1,
+                            edge.width = 0.3,
                             edge.arrow.width = 0,
                             edge.arrow.size = 0,
                             edge.lty = 1, #Line type, 0:blank, 1:solid, 2:dashed, 3: dotted, 4: dotdash,..
@@ -723,14 +563,9 @@ server <- function(input, output) {
                            cex = 1.75)
                 
             }
-                # new_exp_vec[((1+period)*s-period):((1+period)*s)] = new_exp
-                # prev_vec[((1+period)*s-period):((1+period)*s)] = prevs
-                # cis_vec[((1+period)*s-period):((1+period)*s)] = cis
+
             
-            
-            }, width = 1100, height = 900)
-    
-    # output$summary = renderTable({result %>% select(mean:sd9)})        
+            }, width = 1400, height = 1100)
     
 }
 
