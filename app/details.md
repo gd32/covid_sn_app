@@ -6,6 +6,8 @@ This section of the app will define and further describe terminology used in the
 
 ## Terminology
 
+**Infection Rate**: The probability of transmitting the infection per day per network tie. This was calculated from the reported R<sub>0</sub> of COVID-19 (2.5) and a mean infectious period of 3 days.
+
 **Degree**: The number of connections each node has in the network.
 
 **Network N**: The network N refers to the number of network ties per infected individual. This value differs from the population size as not all individauls in a social network are connected and that individuals with a higher degree have a higher risk of infecting others in the network.
