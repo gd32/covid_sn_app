@@ -116,7 +116,7 @@ ui = navbarPage(
 )
 
 # Define server logic
-server <- function(input, output) {
+server <- function(input, output, session) {
 
     # Reactive functions for updating setting/period
     roundmax = reactive({input$period}) 
@@ -535,7 +535,8 @@ server <- function(input, output) {
                                   paste("Recovered: ", ifelse(is.na(rec), 0, rec))),
                        fill = color_vec, 
                        border = NA,
-                       cex = 1.5)
+                       cex = 1.5,
+                       y.intersp = 0.85)
                 
                 legend("topright",
                        bty = "n",
@@ -544,25 +545,30 @@ server <- function(input, output) {
                                   paste("NetworkN: ", round(result$networkN, digits = 2)), 
                                   paste("Reff: ", round(result$Reff, digits = 2))),
                        border = NA,
-                       cex = 1.5)
+                       cex = 1.5,
+                       y.intersp = 0.85)
                 
                 
-                legend("bottomleft",
+                legend("bottomright",
                        bty = "n",
                        legend = c(paste("Cumulative Incidence: ", round(cis[period], digits = 2)),
                                   paste("Prevalence: ", ifelse(is.na(inf), 0, round(inf/people_n, digits = 2)))),
                        fill = NA,
                        border = NA,
-                       cex = 1.5)
+                       cex = 1.5,
+                       y.intersp = 0.85)
 
                 
             }
 
             
-            }, width = 1400, height = 1100)
+    }, height = function(){
+                if (session$clientData$output_sn_width <= 1000){
+                    (session$clientData$output_sn_width)*(3/4) }
+                else { (session$clientData$output_sn_width)*(10/16) }
+                })
+            }
     
-}
-
 
 # Run the application 
 shinyApp(ui = ui, server = server)
