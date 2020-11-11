@@ -6,6 +6,9 @@ Under the **Microsimulation** tab, users can modify the network size, infection 
 
 ## Version History
 
+### Version 1.2
+- Updated dynamic scaling of Shiny UI
+
 ### Version 1.1
 - Updated color scheme and graph paramaterization.
 - Reordered tabs which now includes the *Details* tab.
