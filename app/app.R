@@ -58,45 +58,47 @@ choice_to_snumber = vec_map2[as.character(choice_ft)]
 # Define UI 
 ui = navbarPage(
     
-    title = "Nishi Lab at UCLA - COVID-19 Interactive Network Simulation",
+    title = "Nishi Research Lab - COVID-19 Interactive Network Simulation",
     
     theme = shinytheme("flatly"),
     
     tabPanel(title = "Microsimulation",
-                        
-                        sidebarPanel(
-                            numericInput(inputId = "pop_size", 
-                                         label = "Population Size",
-                                         value = 40, 
-                                         min = 40,
-                                         max = 100,
-                                         step = 20),
-                            numericInput(inputId = "infection_rate",
-                                         label = "Infection Rate", 
-                                         value = 0.1,
-                                         min = 0.01,
-                                         max = 0.25, 
-                                         step = 0.01),
-                            sliderInput(inputId = 'period',
-                                        label = "Duration",
-                                        value = 0,
-                                        min = 0, 
-                                        max = 60,
-                                        step = 5,
-                                        animate = animationOptions(interval = 1800, loop = FALSE)),
-                            selectInput(inputId = "setting",
-                                        label = "Intervention",
-                                        choices = choice_to_number,
-                                        selected = choice_to_number["No Intervention"]),
-                            actionButton("apply", label = "Apply Settings"),
-                            includeMarkdown("microsim.md")                      
-                            ),
-                        
-                        mainPanel(
-                            plotOutput("sn"),
-                            tableOutput("summary")
-                        )
-                ),
+             
+             tags$head(tags$style(type='text/css', ".slider-animate-button { font-size: 30pt !important; }")),
+             
+             sidebarPanel(
+                 numericInput(inputId = "pop_size", 
+                              label = "Population Size",
+                              value = 40, 
+                              min = 40,
+                              max = 100,
+                              step = 20),
+                 numericInput(inputId = "infection_rate",
+                              label = "Infection Rate", 
+                              value = 0.1,
+                              min = 0.01,
+                              max = 0.25, 
+                              step = 0.01),
+                 sliderInput(inputId = 'period',
+                             label = "Duration",
+                             value = 0,
+                             min = 0, 
+                             max = 60,
+                             step = 5,
+                             animate = animationOptions(interval = 1800, loop = FALSE)),
+                 selectInput(inputId = "setting",
+                             label = "Intervention",
+                             choices = choice_to_number,
+                             selected = choice_to_number["No Intervention"]),
+                 actionButton("apply", label = "Change Settings"),
+                 includeMarkdown("microsim.md")                      
+             ),
+             
+             mainPanel(
+                 plotOutput("sn"),
+                 tableOutput("summary")
+             )
+    ),
     tabPanel(title = "Details",
              
              includeMarkdown("details.md"),
@@ -107,21 +109,21 @@ ui = navbarPage(
              hr(),
              br(),
              br(),
-                h5("Built with ",
+             h5("Built with ",
                 img(src = "https://www.rstudio.com/wp-content/uploads/2014/04/shiny.png", height = "30px"),
                 "by ",
                 img(src = "https://www.rstudio.com/wp-content/uploads/2014/07/RStudio-Logo-Blue-Gray.png", height = "30px"),
                 ".")
-             )
+    )
 )
 
 # Define server logic
 server <- function(input, output, session) {
-
+    
     # Reactive functions for updating setting/period
     roundmax = reactive({input$period}) 
     setting = reactive({input$setting})
-   
+    
     ## For simulation
     
     output$sn = renderPlot({
@@ -132,8 +134,8 @@ server <- function(input, output, session) {
         input$apply    
         
         isolate({people_n = input$pop_size
-                 infection_rate = input$infection_rate
-                 s = input$setting})
+        infection_rate = input$infection_rate
+        s = input$setting})
         
         #Set parameters - based off original code's validation set
         
@@ -166,7 +168,7 @@ server <- function(input, output, session) {
         weight_vector = c(1,0.075,0.075,0.0025,0.005,0.01,0.025,0.025,0.5) #set1
         
         #2.1. Creating node data (membership social network = weak ties)
-
+        
         set.seed(h)
         ndata = data.frame(ID = 1:people_n, state = NA)
         ndata$round = 0
@@ -434,7 +436,7 @@ server <- function(input, output, session) {
         #SECTION B: Network-based SEIR Model
         
         sample1 = function(x) 
-            {sample(c(0,1),size=1,replace=FALSE,prob=c(1-x,x))}
+        {sample(c(0,1),size=1,replace=FALSE,prob=c(1-x,x))}
         
         #3.3. Parameters
         seed_number = 10 # Number of initial infections
@@ -445,130 +447,131 @@ server <- function(input, output, session) {
         historical = 0 
         
         #4. Infection for 300 days/rounds  
-
-            #4.2. Setting in ndata1
-            ndata1$state  = sample(c(rep(1, seed_number), #state2=#infectious, #state1=E (#seed=10),#state3=R
-                                     rep(0, people_n-seed_number)), #state0=#susceptible
-                                   size = people_n)
-            ndata1$state_end = ifelse(ndata1$state==1,ndata1$round+e_period,999)
-            
-            # Create graph for set coordinates for plotting
-            g_coords = graph_from_adjacency_matrix(xdata0, weighted = "max", diag = FALSE)
-            g_coords = layout_with_fr(g_coords)
-            
-            #4.3. Simulations
-            new_exp = seed_number/people_n #new infections vector (first component)
-            cis = seed_number/people_n #cumulative incidences vector (first component)
-            prevs = 0 #prevalence (proportion of the latent/infectious people)
-            
-            if (historical == 0) {
-                for (m in 1:period) {
-                    #Step A. Implement first all the automatic changes when the day/round changes
-                    ndata1$round = m
-                    #A1. E(1) to I(2)
-                    ndata1[ndata1$state == 1 & (ndata1$round == ndata1$state_end),"new_i"] = 1
-                    ndata1[ndata1$state==1 & ndata1$new_i==1,"state"] = 2     
-                    ndata1[ndata1$state==2 & ndata1$new_i==1,"state_end"] = ndata1[ndata1$state==2 & ndata1$new_i==1,"round"] + rgeom(length(ndata1[ndata1$state==2 & ndata1$new_i==1,"round"]),prob=(1/i_period))+ 1
-                    #Infectious period is determined by geometric distribution (for R, requires + 1)
-                    
-                    #A2. I(2) to R(3)
-                    ndata1[ndata1$state == 2 & (ndata1$round == ndata1$state_end),"new_r"] = 1
-                    ndata1[ndata1$state==2 & ndata1$new_r==1,"state"] = 3     
-                    ndata1[ndata1$state==3 & ndata1$new_r==1,"state_end"] = ndata1[ndata1$state==3 & ndata1$new_r==1,"state_end"] + r_period
-                    
-                    #Step B. Implement second all the infection events after all the statuses are updated
-                    #B1. For possible state change from S(0) to E(1)
-                    ndata1$contacts = as.matrix(xdata0 %*% ifelse(ndata1$state==2,1,0)) #contact with I (state==2)
-                    ndata1$new_e = as.numeric(lapply(1-(1-infection_rate)^ndata1$contacts, sample1)) #possible infections 
-                    ndata1$new_e = ifelse(ndata1$state==0,ndata1$new_e,0) #only state=0 can get a new infection (latent period)
-                    ndata1[ndata1$state==0 & ndata1$new_e==1,"state"] = 1 
-                    ndata1[ndata1$state==1 & ndata1$new_e==1,"state_end"] = ndata1[ndata1$state==1 & ndata1$new_e==1,"round"] + e_period
-                    
-                    #Step C. Record the results
-                    new_exp = c(new_exp,sum(ndata1$new_e==1)/people_n)
-                    cis = c(cis,sum(ndata1$state %in% c(1,2,3))/people_n)
-                    prevs = c(prevs,sum(ndata1$state %in% c(1,2))/people_n)
-                    
-                    #Step D. Erasing "new" states because they are no longer new after all the above actions
-                    ndata1$new_e = 0
-                    ndata1$new_i = 0
-                    ndata1$new_r = 0
-                    #print(m)
-                }
+        
+        #4.2. Setting in ndata1
+        ndata1$state  = sample(c(rep(1, seed_number), #state2=#infectious, #state1=E (#seed=10),#state3=R
+                                 rep(0, people_n-seed_number)), #state0=#susceptible
+                               size = people_n)
+        ndata1$state_end = ifelse(ndata1$state==1,ndata1$round+e_period,999)
+        
+        # Create graph for set coordinates for plotting
+        g_coords = graph_from_adjacency_matrix(xdata0, weighted = "max", diag = FALSE)
+        g_coords = layout_with_fr(g_coords)
+        
+        #4.3. Simulations
+        new_exp = seed_number/people_n #new infections vector (first component)
+        cis = seed_number/people_n #cumulative incidences vector (first component)
+        prevs = 0 #prevalence (proportion of the latent/infectious people)
+        
+        if (historical == 0) {
+            for (m in 1:period) {
+                #Step A. Implement first all the automatic changes when the day/round changes
+                ndata1$round = m
+                #A1. E(1) to I(2)
+                ndata1[ndata1$state == 1 & (ndata1$round == ndata1$state_end),"new_i"] = 1
+                ndata1[ndata1$state==1 & ndata1$new_i==1,"state"] = 2     
+                ndata1[ndata1$state==2 & ndata1$new_i==1,"state_end"] = ndata1[ndata1$state==2 & ndata1$new_i==1,"round"] + rgeom(length(ndata1[ndata1$state==2 & ndata1$new_i==1,"round"]),prob=(1/i_period))+ 1
+                #Infectious period is determined by geometric distribution (for R, requires + 1)
                 
-                ndata_for_plot = ndata1 %>% filter(round == period)
-           
-                g = graph_from_adjacency_matrix(xdata0, weighted = "max", diag = FALSE)
-
-                plot.igraph(g,
-                            layout = g_coords, #or layout.circle ## look at different layouts
-                            #NODE/VERTEX
-                            vertex.shape = "square", #Shape: none, circle, square,..
-                            vertex.size = 2.5, #Size: default is 15
-                            # vertex.color = brewer.pal(n = 4, name = "Dark2")[ndata_for_plot$state+1], #Color
-                            vertex.color = color_vec[ndata_for_plot$state+1],
-                            vertex.frame.color = NA, #Color of the frame: No need!
-                            vertex.label = NA, 
-                            #LINK/EDGE
-                            # edge.color = y$type, #random
-                            edge.width = 0.3,
-                            edge.arrow.width = 0,
-                            edge.arrow.size = 0,
-                            edge.lty = 1, #Line type, 0:blank, 1:solid, 2:dashed, 3: dotted, 4: dotdash,..
-                            edge.label = NA,
-                            edge.label.cex = NA, 
-                            edge.label.color = NA,
-                            edge.label.family = NA,
-                            main = paste("Day", period),
-                )
+                #A2. I(2) to R(3)
+                ndata1[ndata1$state == 2 & (ndata1$round == ndata1$state_end),"new_r"] = 1
+                ndata1[ndata1$state==2 & ndata1$new_r==1,"state"] = 3     
+                ndata1[ndata1$state==3 & ndata1$new_r==1,"state_end"] = ndata1[ndata1$state==3 & ndata1$new_r==1,"state_end"] + r_period
                 
-                sus = ndata_for_plot %>% count(state) %>% filter(state == 0) %>% select(n)
-                exp = ndata_for_plot %>% count(state) %>% filter(state == 1) %>% select(n)
-                inf = ndata_for_plot %>% count(state) %>% filter(state == 2) %>% select(n)
-                rec = ndata_for_plot %>% count(state) %>% filter(state == 3) %>% select(n)
+                #Step B. Implement second all the infection events after all the statuses are updated
+                #B1. For possible state change from S(0) to E(1)
+                ndata1$contacts = as.matrix(xdata0 %*% ifelse(ndata1$state==2,1,0)) #contact with I (state==2)
+                ndata1$new_e = as.numeric(lapply(1-(1-infection_rate)^ndata1$contacts, sample1)) #possible infections 
+                ndata1$new_e = ifelse(ndata1$state==0,ndata1$new_e,0) #only state=0 can get a new infection (latent period)
+                ndata1[ndata1$state==0 & ndata1$new_e==1,"state"] = 1 
+                ndata1[ndata1$state==1 & ndata1$new_e==1,"state_end"] = ndata1[ndata1$state==1 & ndata1$new_e==1,"round"] + e_period
                 
-                legend("topleft", 
-                       bty = "n", 
-                       legend = c(paste("Susceptible: ", ifelse(is.na(sus), 0, sus)),
-                                  paste("Exposed: ", ifelse(is.na(exp), 0, exp)),
-                                  paste("Infectious: ", ifelse(is.na(inf), 0, inf)),
-                                  paste("Recovered: ", ifelse(is.na(rec), 0, rec))),
-                       fill = color_vec, 
-                       border = NA,
-                       cex = 1.5,
-                       y.intersp = 0.85)
+                #Step C. Record the results
+                new_exp = c(new_exp,sum(ndata1$new_e==1)/people_n)
+                cis = c(cis,sum(ndata1$state %in% c(1,2,3))/people_n)
+                prevs = c(prevs,sum(ndata1$state %in% c(1,2))/people_n)
                 
-                legend("topright",
-                       bty = "n",
-                       legend = c(paste("Mean Degree: ", round(result$mean, digits = 2)),
-                                  paste("SD: ", round(result$sd, digits = 2)),
-                                  paste("NetworkN: ", round(result$networkN, digits = 2)), 
-                                  paste("Reff: ", round(result$Reff, digits = 2))),
-                       border = NA,
-                       cex = 1.5,
-                       y.intersp = 0.85)
-                
-                
-                legend("bottomright",
-                       bty = "n",
-                       legend = c(paste("Cumulative Incidence: ", round(cis[period], digits = 2)),
-                                  paste("Prevalence: ", ifelse(is.na(inf), 0, round(inf/people_n, digits = 2)))),
-                       fill = NA,
-                       border = NA,
-                       cex = 1.5,
-                       y.intersp = 0.85)
-
-                
+                #Step D. Erasing "new" states because they are no longer new after all the above actions
+                ndata1$new_e = 0
+                ndata1$new_i = 0
+                ndata1$new_r = 0
+                #print(m)
             }
-
             
+            ndata_for_plot = ndata1 %>% filter(round == period)
+            
+            g = graph_from_adjacency_matrix(xdata0, weighted = "max", diag = FALSE)
+            
+            plot.igraph(g,
+                        layout = g_coords, #or layout.circle ## look at different layouts
+                        #NODE/VERTEX
+                        vertex.shape = "square", #Shape: none, circle, square,..
+                        vertex.size = 2.5, #Size: default is 15
+                        # vertex.color = brewer.pal(n = 4, name = "Dark2")[ndata_for_plot$state+1], #Color
+                        vertex.color = color_vec[ndata_for_plot$state+1],
+                        vertex.frame.color = NA, #Color of the frame: No need!
+                        vertex.label = NA, 
+                        #LINK/EDGE
+                        # edge.color = y$type, #random
+                        edge.width = 0.3,
+                        edge.arrow.width = 0,
+                        edge.arrow.size = 0,
+                        edge.lty = 1, #Line type, 0:blank, 1:solid, 2:dashed, 3: dotted, 4: dotdash,..
+                        edge.label = NA,
+                        edge.label.cex = NA, 
+                        edge.label.color = NA,
+                        edge.label.family = NA,
+                        main = paste("Day", period),
+            )
+            
+            sus = (ndata_for_plot %>% count(state) %>% filter(state == 0) %>% select(n))[1,1]
+            exp = (ndata_for_plot %>% count(state) %>% filter(state == 1) %>% select(n))[1,1]
+            inf = (ndata_for_plot %>% count(state) %>% filter(state == 2) %>% select(n))[1,1]
+            rec = (ndata_for_plot %>% count(state) %>% filter(state == 3) %>% select(n))[1,1]
+            
+            legend("topleft", 
+                   bty = "n", 
+                   legend = c(paste("Susceptible: ", ifelse(is.na(sus), 0, sus)),
+                              paste("Exposed: ", ifelse(is.na(exp), 0, exp)),
+                              paste("Infectious: ", ifelse(is.na(inf), 0, inf)),
+                              paste("Recovered: ", ifelse(is.na(rec), 0, rec))),
+                   fill = color_vec, 
+                   border = NA,
+                   cex = 1.5,
+                   y.intersp = 0.85)
+            
+            
+            legend("topright",
+                   bty = "n",
+                   legend = c(paste("Mean Degree: ", round(result$mean, digits = 2)),
+                              paste("SD: ", round(result$sd, digits = 2)),
+                              paste("NetworkN: ", round(result$networkN, digits = 2)), 
+                              paste("Reff: ", round(result$Reff, digits = 2))),
+                   border = NA,
+                   cex = 1.5,
+                   y.intersp = 0.85)
+            
+            ci = (cis[period])[1]       
+            
+            legend("bottomright",
+                   bty = "n",
+                   legend = c(paste("Cumulative Incidence: ", ifelse(is.na(ci), 0, round(cis[period], digits = 2))),
+                              paste("Prevalence: ", ifelse(is.na(inf), 0, round(inf/people_n, digits = 2)))),
+                   fill = NA,
+                   border = NA,
+                   cex = 1.5,
+                   y.intersp = 0.85)
+            
+        }
+        
+        
     }, height = function(){
-                if (session$clientData$output_sn_width <= 1000){
-                    (session$clientData$output_sn_width)*(3/4) }
-                else { (session$clientData$output_sn_width)*(10/16) }
-                })
-            }
-    
+        if (session$clientData$output_sn_width <= 1000){
+            (session$clientData$output_sn_width)*(3/4) }
+        else { (session$clientData$output_sn_width)*(10/16) }
+    })
+}
+
 
 # Run the application 
 shinyApp(ui = ui, server = server)
