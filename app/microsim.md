@@ -10,3 +10,7 @@ On the right column, you can modify the network size, infection rate, and interv
 
 Each population is seeded with 10 infections at the start of the simulation. You should be able to see people passing through the 4 stages of the SEIR model (susceptible, infected, exposed, and recovered).
 
+---
+
+#### Note: Simulation performance may be affected if too many users are currently accessing the app. Please use the [mirror](link) if you notice the simulation being particularly slow or if the animation is not playing smoothly. Alternatively, wait a few moments and try to run your simulation again.
+
